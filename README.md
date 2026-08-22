@@ -19,8 +19,8 @@ In multi-tiered supply chains, evaluating risk requires answering recursive ques
 ---
 
 ## Data Model & Architecture
-(:Supplier) -[:SUPPLIES]-> (:Component) -[:USED_IN]-> (:Component) -[:USED_IN]-> (:Product)
 
+(:Supplier) -[:SUPPLIES]-> (:Component) -[:USED_IN]-> (:Component) -[:USED_IN]-> (:Product)
 
 ### Graph Schema
 - **Nodes:**
@@ -48,55 +48,15 @@ In multi-tiered supply chains, evaluating risk requires answering recursive ques
 
 ### Instructions
 1. Clone the repository:
-   ```bash
-   git clone [https://github.com/major-NEELKAMAL/supply-chain-frontend](https://github.com/major-NEELKAMAL/supply-chain-frontend)
+   git clone https://github.com/major-NEELKAMAL/supply-chain-frontend
    cd supply-chain-frontend
-Install dependencies:
 
-Bash
-npm install
-Update src/app/services/supply-chain.service.ts if running against a local backend (http://localhost:8081/api/supply-chain).
+2. Install dependencies:
+   npm install
 
-Start dev server:
+3. Update `src/app/services/supply-chain.service.ts` if running against a local backend (`http://localhost:8081/api/supply-chain`).
 
-Bash
-ng serve
-Navigate to http://localhost:4200/.
+4. Start dev server:
+   ng serve
 
-
----
-
-### 2. Backend Repository (`supplychain-api/README.md`)
-
-```markdown
-# Supply Chain Blast-Radius Tracker (Backend API)
-
-Spring Boot REST API service powering the Supply Chain Blast-Radius Tracker. Built with Java 21, Spring Boot, and the official Neo4j Java Driver over the Bolt protocol to interact with **CognoDB Cloud**.
-
-- **Live API Endpoint:** [https://supplychain-api-3ntq.onrender.com/api/supply-chain](https://supplychain-api-3ntq.onrender.com/api/supply-chain)
-- **Frontend Repository:** [https://github.com/major-NEELKAMAL/supply-chain-frontend](https://github.com/major-NEELKAMAL/supply-chain-frontend)
-
----
-
-## Core Cypher Queries
-
-### 1. Multi-Hop Impact Query (Parameterized)
-Executes variable-length path traversals (2 to 4 hops) to return affected downstream end-products along with the exact hop distance:
-
-```cypher
-MATCH path = (s:Supplier {id: $supplierId})-[:SUPPLIES|USED_IN*1..4]->(p:Product)
-RETURN DISTINCT p.id AS productId, p.name AS productName, length(path) AS depth
-2. Data Seeding Query
-Populates CognoDB using MERGE idempotency to prevent duplicate node creation:
-
-Cypher
-MERGE (s1:Supplier {id: 'SUP-50'}) SET s1.name = 'MicroChip Corp', s1.region = 'Taiwan'
-MERGE (c1:Component {id: 'CMP-101'}) SET c1.name = 'Microcontroller Unit'
-MERGE (c2:Component {id: 'CMP-202'}) SET c2.name = 'Control Board'
-MERGE (p1:Product {id: 'PRD-900'}) SET p1.name = 'Medical Monitor'
-MERGE (p2:Product {id: 'PRD-901'}) SET p2.name = 'Automotive ECU'
-
-MERGE (s1)-[:SUPPLIES]->(c1)
-MERGE (c1)-[:USED_IN]->(c2)
-MERGE (c2)-[:USED_IN]->(p1)
-MERGE (c1)-[:USED_IN]->(p2)
+5. Navigate to [http://localhost:4200/](http://localhost:4200/).
