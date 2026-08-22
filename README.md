@@ -1,27 +1,102 @@
-# SupplyChainFrontend
+# Supply Chain Blast-Radius Tracker (Frontend)
 
-This project was generated with [Angular CLI](https://github.com/angular/angular-cli) version 18.2.21.
+An interactive Angular application backed by a Spring Boot microservice and **CognoDB** graph database. This tool enables non-technical domain experts to analyze component dependencies and quantify downstream impact (blast radius) when a supplier experiences disruptions.
 
-## Development server
+- **Live Application:** `https://supply-chain-frontend-bknf.onrender.com`
+- **Backend Repository:** `https://github.com/major-NEELKAMAL/supplychain-api`
+- **Video Walkthrough:** [PASTE_YOUR_LOOM_OR_YOUTUBE_LINK_HERE]
 
-Run `ng serve` for a dev server. Navigate to `http://localhost:4200/`. The application will automatically reload if you change any of the source files.
+---
 
-## Code scaffolding
+## Why a Graph Database?
 
-Run `ng generate component component-name` to generate a new component. You can also use `ng generate directive|pipe|service|class|guard|interface|enum|module`.
+In multi-tiered supply chains, evaluating risk requires answering recursive questions: *"If Supplier X fails, which finished products and sub-assemblies are impacted, and at what depth?"*
 
-## Build
+* **Index-Free Adjacency:** Relational databases require expensive, multi-table `JOIN` operations or complex recursive Common Table Expressions (CTEs) that degrade exponentially as dependency depth increases. CognoDB traverses graph pointers natively in $O(1)$ time per relationship step.
+* **Flexible Edge Modeling:** Graph nodes (`Supplier`, `Component`, `Product`) and relationships (`SUPPLIES`, `USED_IN`) naturally mirror real-world bill-of-materials (BOM) networks without forcing unnatural relational normalization.
+* **Declarative Traversals:** Cypher allows variable-length path matching like `(s:Supplier)-[:SUPPLIES|USED_IN*1..4]->(p:Product)` in a single clean query.
 
-Run `ng build` to build the project. The build artifacts will be stored in the `dist/` directory.
+---
 
-## Running unit tests
+## Data Model & Architecture
+(:Supplier) -[:SUPPLIES]-> (:Component) -[:USED_IN]-> (:Component) -[:USED_IN]-> (:Product)
 
-Run `ng test` to execute the unit tests via [Karma](https://karma-runner.github.io).
+### Graph Schema
+- **Nodes:**
+  - `Supplier`: `{ id: String, name: String, region: String }`
+  - `Component`: `{ id: String, name: String }`
+  - `Product`: `{ id: String, name: String }`
+- **Relationships:**
+  - `SUPPLIES`: Connects `Supplier` to `Component`
+  - `USED_IN`: Connects `Component` to sub-components or final `Product`
 
-## Running end-to-end tests
+---
 
-Run `ng e2e` to execute the end-to-end tests via a platform of your choice. To use this command, you need to first add a package that implements end-to-end testing capabilities.
+## UI Features
+- **One-Click Data Seeding:** Trigger graph populating via the backend REST endpoint.
+- **Dynamic Blast Radius Analysis:** Input any supplier ID (e.g., `SUP-50`) to view multi-hop impacts formatted by distance (hops).
+- **Graceful States:** Includes responsive loading indicators, empty states for unknown IDs, and clear error alerts.
 
-## Further help
+---
 
-To get more help on the Angular CLI use `ng help` or go check out the [Angular CLI Overview and Command Reference](https://angular.dev/tools/cli) page.
+## Local Development Setup
+
+### Prerequisites
+- Node.js (v18+)
+- Angular CLI (`npm install -g @angular/cli`)
+
+### Instructions
+1. Clone the repository:
+   ```bash
+   git clone [PASTE_YOUR_FRONTEND_REPO_URL]
+   cd supply-chain-frontend
+   
+Install dependencies:
+
+Bash
+npm install
+Update src/app/services/supply-chain.service.ts if running against a local backend (http://localhost:8081/api/supply-chain).
+
+Start dev server:
+
+Bash
+ng serve
+Navigate to http://localhost:4200/.
+
+
+---
+
+### 2. Backend Repository (`supply-chain-backend/README.md`)
+
+```markdown
+# Supply Chain Blast-Radius Tracker (Backend API)
+
+Spring Boot REST API service powering the Supply Chain Blast-Radius Tracker. Built with Java 21, Spring Boot, and the official Neo4j Java Driver over the Bolt protocol to interact with **CognoDB Cloud**.
+
+- **Live API Endpoint:** `https://supplychain-api-3ntq.onrender.com/api/supply-chain`
+- **Frontend Repository:** `https://github.com/major-NEELKAMAL/supply-chain-frontend`
+
+---
+
+## Core Cypher Queries
+
+### 1. Multi-Hop Impact Query (Parameterized)
+Executes variable-length path traversals (2 to 4 hops) to return affected downstream end-products along with the exact hop distance:
+
+```cypher
+MATCH path = (s:Supplier {id: $supplierId})-[:SUPPLIES|USED_IN*1..4]->(p:Product)
+RETURN DISTINCT p.id AS productId, p.name AS productName, length(path) AS depth
+2. Data Seeding Query
+Populates CognoDB using MERGE idempotency to prevent duplicate node creation:
+
+Cypher
+MERGE (s1:Supplier {id: 'SUP-50'}) SET s1.name = 'MicroChip Corp', s1.region = 'Taiwan'
+MERGE (c1:Component {id: 'CMP-101'}) SET c1.name = 'Microcontroller Unit'
+MERGE (c2:Component {id: 'CMP-202'}) SET c2.name = 'Control Board'
+MERGE (p1:Product {id: 'PRD-900'}) SET p1.name = 'Medical Monitor'
+MERGE (p2:Product {id: 'PRD-901'}) SET p2.name = 'Automotive ECU'
+
+MERGE (s1)-[:SUPPLIES]->(c1)
+MERGE (c1)-[:USED_IN]->(c2)
+MERGE (c2)-[:USED_IN]->(p1)
+MERGE (c1)-[:USED_IN]->(p2)
