@@ -4,7 +4,7 @@ An interactive Angular application backed by a Spring Boot microservice and **Co
 
 - **Live Application:** `https://supply-chain-frontend-bknf.onrender.com`
 - **Backend Repository:** `https://github.com/major-NEELKAMAL/supplychain-api`
-- **Video Walkthrough:** [PASTE_YOUR_LOOM_OR_YOUTUBE_LINK_HERE]
+- **Video Walkthrough:** `https://www.loom.com/share/591572ae2be3403f8c10cd1720adb4b3`
 
 ---
 
@@ -48,7 +48,7 @@ In multi-tiered supply chains, evaluating risk requires answering recursive ques
 ### Instructions
 1. Clone the repository:
    ```bash
-   git clone [PASTE_YOUR_FRONTEND_REPO_URL]
+   git clone `https://github.com/major-NEELKAMAL/supply-chain-frontend`
    cd supply-chain-frontend
    
 Install dependencies:
