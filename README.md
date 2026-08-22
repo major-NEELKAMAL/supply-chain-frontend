@@ -48,7 +48,7 @@ In multi-tiered supply chains, evaluating risk requires answering recursive ques
 ### Instructions
 1. Clone the repository:
    ```bash
-   git clone `https://github.com/major-NEELKAMAL/supply-chain-frontend`
+   git clone https://github.com/major-NEELKAMAL/supply-chain-frontend
    cd supply-chain-frontend
    
 Install dependencies:
