@@ -2,9 +2,9 @@
 
 An interactive Angular application backed by a Spring Boot microservice and **CognoDB** graph database. This tool enables non-technical domain experts to analyze component dependencies and quantify downstream impact (blast radius) when a supplier experiences disruptions.
 
-- **Live Application:** `https://supply-chain-frontend-bknf.onrender.com`
-- **Backend Repository:** `https://github.com/major-NEELKAMAL/supplychain-api`
-- **Video Walkthrough:** `https://www.loom.com/share/591572ae2be3403f8c10cd1720adb4b3`
+- **Live Application:** [https://supply-chain-frontend-bknf.onrender.com](https://supply-chain-frontend-bknf.onrender.com)
+- **Backend Repository:** [https://github.com/major-NEELKAMAL/supplychain-api](https://github.com/major-NEELKAMAL/supplychain-api)
+- **Video Walkthrough:** [https://www.loom.com/share/591572ae2be3403f8c10cd1720adb4b3](https://www.loom.com/share/591572ae2be3403f8c10cd1720adb4b3)
 
 ---
 
@@ -20,6 +20,7 @@ In multi-tiered supply chains, evaluating risk requires answering recursive ques
 
 ## Data Model & Architecture
 (:Supplier) -[:SUPPLIES]-> (:Component) -[:USED_IN]-> (:Component) -[:USED_IN]-> (:Product)
+
 
 ### Graph Schema
 - **Nodes:**
@@ -48,9 +49,8 @@ In multi-tiered supply chains, evaluating risk requires answering recursive ques
 ### Instructions
 1. Clone the repository:
    ```bash
-   git clone https://github.com/major-NEELKAMAL/supply-chain-frontend
+   git clone [https://github.com/major-NEELKAMAL/supply-chain-frontend](https://github.com/major-NEELKAMAL/supply-chain-frontend)
    cd supply-chain-frontend
-   
 Install dependencies:
 
 Bash
@@ -66,15 +66,15 @@ Navigate to http://localhost:4200/.
 
 ---
 
-### 2. Backend Repository (`supply-chain-backend/README.md`)
+### 2. Backend Repository (`supplychain-api/README.md`)
 
 ```markdown
 # Supply Chain Blast-Radius Tracker (Backend API)
 
 Spring Boot REST API service powering the Supply Chain Blast-Radius Tracker. Built with Java 21, Spring Boot, and the official Neo4j Java Driver over the Bolt protocol to interact with **CognoDB Cloud**.
 
-- **Live API Endpoint:** `https://supplychain-api-3ntq.onrender.com/api/supply-chain`
-- **Frontend Repository:** `https://github.com/major-NEELKAMAL/supply-chain-frontend`
+- **Live API Endpoint:** [https://supplychain-api-3ntq.onrender.com/api/supply-chain](https://supplychain-api-3ntq.onrender.com/api/supply-chain)
+- **Frontend Repository:** [https://github.com/major-NEELKAMAL/supply-chain-frontend](https://github.com/major-NEELKAMAL/supply-chain-frontend)
 
 ---
 
