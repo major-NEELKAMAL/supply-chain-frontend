@@ -1,0 +1,55 @@
+<div style="max-width: 800px; margin: 40px auto; font-family: system-ui, sans-serif; padding: 20px; border: 1px solid #e0e0e0; border-radius: 8px;">
+  <h2>Supply Chain Blast-Radius Tracker</h2>
+  <p style="color: #666;">Multi-hop Cypher Traversal powered by CognoDB & Spring Boot</p>
+
+  <!-- Controls -->
+  <div style="display: flex; gap: 10px; margin-bottom: 20px;">
+    <input 
+      [(ngModel)]="supplierId" 
+      placeholder="Enter Supplier ID (e.g. SUP-50)" 
+      style="padding: 8px 12px; flex: 1; border: 1px solid #ccc; border-radius: 4px;"
+    />
+    <button (click)="analyzeImpact()" style="padding: 8px 16px; background: #0066cc; color: white; border: none; border-radius: 4px; cursor: pointer;">
+      Analyze Impact
+    </button>
+    <button (click)="seedDatabase()" style="padding: 8px 16px; background: #2e7d32; color: white; border: none; border-radius: 4px; cursor: pointer;">
+      Seed Graph Data
+    </button>
+  </div>
+
+  <!-- Statuses -->
+  <div *ngIf="loading" style="padding: 10px; background: #e3f2fd; color: #0d47a1; margin-bottom: 15px; border-radius: 4px;">
+    Traversing graph relationships...
+  </div>
+
+  <div *ngIf="seedMessage" style="padding: 10px; background: #e8f5e9; color: #1b5e20; margin-bottom: 15px; border-radius: 4px;">
+    {{ seedMessage }}
+  </div>
+
+  <div *ngIf="error" style="padding: 10px; background: #ffebee; color: #c62828; margin-bottom: 15px; border-radius: 4px;">
+    {{ error }}
+  </div>
+
+  <!-- Empty State -->
+  <div *ngIf="!loading && !error && impactedProducts.length === 0" style="padding: 20px; text-align: center; color: #888; background: #f9f9f9; border-radius: 4px;">
+    No downstream products impacted for this supplier. Click "Seed Graph Data" first if database is empty.
+  </div>
+
+  <!-- Results Table -->
+  <table *ngIf="impactedProducts.length > 0" style="width: 100%; border-collapse: collapse; margin-top: 10px;">
+    <thead>
+      <tr style="background: #f5f5f5; text-align: left;">
+        <th style="padding: 10px; border-bottom: 20px solid #ddd;">Product ID</th>
+        <th style="padding: 10px; border-bottom: 2px solid #ddd;">Product Name</th>
+        <th style="padding: 10px; border-bottom: 2px solid #ddd;">Dependency Distance</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr *ngFor="let item of impactedProducts" style="border-bottom: 1px solid #eee;">
+        <td style="padding: 10px;">{{ item.productId }}</td>
+        <td style="padding: 10px;">{{ item.productName }}</td>
+        <td style="padding: 10px;"><span style="background: #fff3e0; color: #e65100; padding: 2px 8px; border-radius: 12px; font-weight: bold;">{{ item.depth }} Hops</span></td>
+      </tr>
+    </tbody>
+  </table>
+</div>
