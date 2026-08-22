@@ -1,54 +1,117 @@
-import { Component } from '@angular/core';
-import { CommonModule } from '@angular/common';
+import { Component, OnInit, OnDestroy, Inject, PLATFORM_ID } from '@angular/core';
+import { isPlatformBrowser, CommonModule } from '@angular/common'; // <--- Import isPlatformBrowser
 import { FormsModule } from '@angular/forms';
-import { SupplyChainService, ImpactedProduct } from '../../services/supply-chain.service';
+import { HttpErrorResponse } from '@angular/common/http';
+import { SupplyChainService } from '../../services/supply-chain.service';
+import { Subscription, timer } from 'rxjs';
 
 @Component({
   selector: 'app-impact-analysis',
   standalone: true,
   imports: [CommonModule, FormsModule],
-  templateUrl: './impact-analysis.component.html',
-  styleUrl: './impact-analysis.component.scss'
+  templateUrl: './impact-analysis.component.html'
 })
-export class ImpactAnalysisComponent {
+export class ImpactAnalysisComponent implements OnInit, OnDestroy {
   supplierId: string = 'SUP-50';
-  impactedProducts: ImpactedProduct[] = [];
-  loading: boolean = false;
-  error: string | null = null;
-  seedMessage: string | null = null;
+  impactResults: any[] = [];
+  
+  isSeeding: boolean = false;
+  isAnalyzing: boolean = false;
 
-  constructor(private supplyChainService: SupplyChainService) {}
+  isHealthy: boolean = false;
+  isCheckingHealth: boolean = true;
 
-  seedDatabase() {
-    this.loading = true;
-    this.error = null;
-    this.seedMessage = null;
+  private healthSubscription!: Subscription;
 
-    this.supplyChainService.seedData().subscribe({
-      next: (response) => {
-        this.seedMessage = response;
-        this.loading = false;
+  toastMessage: string | null = null;
+  toastType: 'success' | 'error' = 'success';
+
+  // Inject PLATFORM_ID to detect SSR vs Browser environment
+  constructor(
+    private supplyChainService: SupplyChainService,
+    @Inject(PLATFORM_ID) private platformId: Object
+  ) {}
+
+  ngOnInit(): void {
+    // ONLY start polling if executing inside client browser
+    if (isPlatformBrowser(this.platformId)) {
+      this.startHealthcheckScheduler();
+    }
+  }
+
+  startHealthcheckScheduler(): void {
+    this.healthSubscription = timer(0, 60000).subscribe(() => {
+      this.checkHealthStatus();
+    });
+  }
+
+  checkHealthStatus(): void {
+    this.supplyChainService.checkHealth().subscribe({
+      next: (res: any) => {
+        this.isHealthy = res?.success ?? true;
+        this.isCheckingHealth = false;
       },
-      error: (err) => {
-        this.error = 'Failed to seed database. Verify Spring Boot (8081) and CognoDB connection.';
-        this.loading = false;
+      error: () => {
+        this.isHealthy = false;
+        this.isCheckingHealth = false;
       }
     });
   }
 
-  analyzeImpact() {
-    this.loading = true;
-    this.error = null;
-    this.seedMessage = null;
+  ngOnDestroy(): void {
+    if (this.healthSubscription) {
+      this.healthSubscription.unsubscribe();
+    }
+  }
 
-    this.supplyChainService.getImpactedProducts(this.supplierId).subscribe({
-      next: (data) => {
-        this.impactedProducts = data;
-        this.loading = false;
+  private showToast(message: string, type: 'success' | 'error'): void {
+    this.toastMessage = message;
+    this.toastType = type;
+    
+    setTimeout(() => {
+      this.toastMessage = null;
+    }, 4000);
+  }
+
+  onSeedData(): void {
+    this.isSeeding = true;
+
+    this.supplyChainService.seedData().subscribe({
+      next: (res: any) => {
+        this.isSeeding = false;
+        this.showToast(res?.message || 'Graph data seeded successfully!', 'success');
+       
       },
-      error: (err) => {
-        this.error = 'Failed to query CognoDB via backend at http://localhost:8081';
-        this.loading = false;
+      error: (err: HttpErrorResponse) => {
+        this.isSeeding = false;
+        const backendMsg = err.error?.message || 'Failed to seed graph database.';
+        this.showToast(backendMsg, 'error');
+      }
+    });
+  }
+
+  onAnalyzeImpact(): void {
+    if (!this.supplierId.trim()) return;
+
+    this.isAnalyzing = true;
+    this.impactResults = [];
+
+    this.supplyChainService.getImpact(this.supplierId.trim()).subscribe({
+      next: (res: any) => {
+        this.impactResults = res?.impactedProducts || [];
+        this.isAnalyzing = false;
+        
+        if (this.impactResults.length > 0) {
+          this.showToast(`Found ${this.impactResults.length} impacted end-products.`, 'success');
+        } else {
+          this.showToast(`No blast radius paths found for ${this.supplierId}`, 'error');
+        }
+      },
+      error: (err: HttpErrorResponse) => {
+        this.isAnalyzing = false;
+        const backendMsg = err.error?.message || `Error analyzing impact for ${this.supplierId}`;
+        this.showToast(backendMsg, 'error');
+        
       }
     });
   }

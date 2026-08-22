@@ -2,26 +2,23 @@ import { Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { Observable } from 'rxjs';
 
-export interface ImpactedProduct {
-  productId: string;
-  productName: string;
-  depth: number;
-}
-
 @Injectable({
   providedIn: 'root'
 })
 export class SupplyChainService {
-
-private apiUrl = 'https://supplychain-api-3ntq.onrender.com/api/supply-chain';
+  private baseUrl = 'https://supplychain-api-3ntq.onrender.com/api/v1/supply-chain';
 
   constructor(private http: HttpClient) {}
 
-  getImpactedProducts(supplierId: string): Observable<ImpactedProduct[]> {
-    return this.http.get<ImpactedProduct[]>(`${this.apiUrl}/impact/${supplierId}`);
+  seedData(): Observable<any> {
+    return this.http.post<any>(`${this.baseUrl}/seed`, {});
   }
 
-  seedData(): Observable<string> {
-    return this.http.post(`${this.apiUrl}/seed`, {}, { responseType: 'text' });
+  getImpact(supplierId: string): Observable<any> {
+    return this.http.get<any>(`${this.baseUrl}/impact/${supplierId}`);
+  }
+
+  checkHealth(): Observable<any> {
+    return this.http.get<any>(`${this.baseUrl}/healthcheck`);
   }
 }
