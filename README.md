@@ -5,7 +5,7 @@ An interactive Angular application backed by a Spring Boot microservice and Cogn
 - **Live API Endpoint:** https://supplychain-api-3ntq.onrender.com/api/v1/supply-chain/healthcheck
 - **Live Application:** https://supply-chain-frontend-74mv.onrender.com/
 - **Backend Repository:** https://github.com/major-NEELKAMAL/supplychain-api
-- **Video Walkthrough:** https://www.loom.com/share/591572ae2be3403f8c10cd1720adb4b3
+- **Video Walkthrough:** https://www.loom.com/share/d6b0441314d9472c9d703b410b201dae
 
 ---
 
