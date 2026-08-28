@@ -1,212 +1,264 @@
-<div class="min-h-screen bg-teal-900 py-10 px-4 sm:px-6 lg:px-8 font-sans text-white relative">
-  <div class="max-w-5xl mx-auto">
-    
-    <!-- Header -->
-    <header class="mb-8">
-      <!-- Dynamic Healthcheck Badge -->
-      <div class="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full text-xs font-semibold mb-3 border backdrop-blur-md transition-all"
-           [ngClass]="{
-             'bg-emerald-500/20 text-emerald-200 border-emerald-400/40': isHealthy && !isCheckingHealth,
-             'bg-rose-500/20 text-rose-200 border-rose-400/40': !isHealthy && !isCheckingHealth,
-             'bg-white/10 text-teal-100 border-white/20': isCheckingHealth
-           }">
-        
-        <!-- Green Pulse (Healthy) -->
-        <span *ngIf="isHealthy && !isCheckingHealth" 
-              class="w-2 h-2 bg-emerald-400 rounded-full animate-pulse shadow-[0_0_8px_rgba(52,211,153,0.8)]"></span>
-        
-        <!-- Red Solid (Offline/Error) -->
-        <span *ngIf="!isHealthy && !isCheckingHealth" 
-              class="w-2 h-2 bg-rose-400 rounded-full shadow-[0_0_8px_rgba(251,113,133,0.8)]"></span>
-        
-        <!-- Spinner (Checking) -->
-        <span *ngIf="isCheckingHealth" 
-              class="w-2 h-2 border-2 border-teal-200 border-t-transparent rounded-full animate-spin"></span>
+<div class="min-h-screen bg-gray-100 py-10 px-4 sm:px-6 lg:px-8 font-sans text-gray-800 relative">
+  <div class="max-w-5xl mx-auto space-y-6">
 
-        <span>
-          {{ isCheckingHealth ? 'Checking Engine Status...' : (isHealthy ? 'CognoDB Graph Engine Active' : 'CognoDB Engine Offline') }}
+    <!-- Header Section -->
+    <header class="border-b border-gray-300 pb-4">
+      <h1 class="text-3xl font-extrabold text-gray-900 tracking-tight">Downstream Impact Analysis</h1>
+      <p class="text-gray-600 text-sm mt-1">Start typing to search and select an entity to automatically trigger downstream impact analysis.</p>
+    </header>
+
+    <!-- Search & Selection Card -->
+    <div class="bg-white rounded-2xl border border-gray-300 p-6 shadow-sm space-y-4 relative z-40">
+      <div class="relative">
+        <label for="entity-search" class="block text-xs font-bold uppercase tracking-wider text-teal-700 mb-2">
+          Search Entity Node (Min. 2 Characters)
+        </label>
+        
+        <div class="relative flex items-center">
+          <input 
+            id="entity-search"
+            type="text" 
+            [(ngModel)]="searchQuery" 
+            (input)="onInputChange()"
+            (focus)="showDropdown = searchResults.length > 0 || (hasSearched && searchResults.length === 0)"
+            (blur)="hideDropdownWithDelay()"
+            placeholder="Type Name (e.g. mi, pvt)..." 
+            class="w-full pl-4 pr-10 py-3 bg-gray-50 border border-gray-300 rounded-xl text-gray-900 placeholder-gray-400 text-sm focus:outline-none focus:ring-2 focus:ring-teal-500 focus:border-teal-500 transition">
+          
+          <button 
+            *ngIf="searchQuery" 
+            (click)="clearSearch()" 
+            type="button"
+            aria-label="Clear search query"
+            class="absolute right-3 text-gray-400 hover:text-gray-700 font-bold text-sm cursor-pointer">
+            ✕
+          </button>
+        </div>
+
+        <!-- Dynamic Dropdown -->
+        <div 
+          *ngIf="showDropdown" 
+          class="absolute left-0 right-0 mt-2 bg-white border border-gray-300 rounded-xl shadow-lg z-50 overflow-hidden max-h-60 overflow-y-auto">
+          
+          <div 
+            *ngFor="let result of searchResults" 
+            (mousedown)="selectEntity(result)"
+            class="p-3 hover:bg-gray-100 cursor-pointer border-b border-gray-200 last:border-none transition flex items-center justify-between">
+            <div>
+              <div class="text-sm font-semibold text-gray-900">{{ result.name }}</div>
+              <div class="text-xs text-gray-500 font-mono">ID: {{ result.id }} | Category: {{ result.category || 'N/A' }}</div>
+            </div>
+            <span [ngClass]="{
+              'bg-gray-200 text-gray-800 border-gray-300': result.entityType.toUpperCase() === 'SUPPLIER',
+              'bg-amber-100 text-amber-800 border-amber-300': result.entityType.toUpperCase() === 'RAW_MATERIAL',
+              'bg-teal-100 text-teal-800 border-teal-300': result.entityType.toUpperCase() === 'COMPONENT',
+              'bg-sky-100 text-sky-800 border-sky-300': result.entityType.toUpperCase() === 'SUB_ASSEMBLY',
+              'bg-emerald-100 text-emerald-800 border-emerald-300': result.entityType.toUpperCase() === 'PRODUCT'
+            }" class="px-2.5 py-0.5 text-[10px] font-bold uppercase border rounded-md tracking-wider">
+              {{ result.entityType }}
+            </span>
+          </div>
+
+          <div *ngIf="searchResults.length === 0 && hasSearched && !isSearching" class="p-4 text-center text-xs text-gray-500 italic">
+            List empty. No matching entities found.
+          </div>
+        </div>
+
+        <div *ngIf="isSearching" class="text-xs text-teal-700 font-medium mt-2 flex items-center gap-2">
+          <svg class="w-3.5 h-3.5 animate-spin text-teal-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/>
+          </svg>
+          Searching entities...
+        </div>
+      </div>
+
+      <!-- Selected Entity Banner -->
+      <div *ngIf="selectedEntity" class="p-3 bg-gray-50 border border-gray-300 rounded-xl flex items-center justify-between text-xs">
+        <div>
+          <span class="text-gray-600 font-medium">Selected Entity:</span>
+          <span class="font-bold text-gray-900 ml-1.5">{{ selectedEntity.name }}</span>
+          <span class="text-gray-500 font-mono ml-2">({{ selectedEntity.id }})</span>
+        </div>
+        <span class="px-2.5 py-0.5 bg-teal-100 text-teal-800 border border-teal-300 rounded-md font-bold uppercase text-[10px] tracking-wider">
+          {{ selectedEntity.entityType }}
+        </span>
+      </div>
+    </div>
+
+    <!-- Analysis Loading Spinner -->
+    <div *ngIf="isAnalyzing" class="p-8 text-center bg-white rounded-2xl border border-gray-300 shadow-sm">
+      <div class="inline-flex items-center gap-3 text-teal-700 font-semibold text-sm">
+        <svg class="w-5 h-5 animate-spin text-teal-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/>
+        </svg>
+        Analyzing downstream graph impacts...
+      </div>
+    </div>
+
+    <!-- Dynamic Downstream Impact Topology -->
+    <div *ngIf="hasAnalyzed && !isAnalyzing" class="bg-white rounded-2xl border border-gray-300 p-6 shadow-sm space-y-4">
+      <div class="flex items-center justify-between border-b border-gray-200 pb-3">
+        <div>
+          <h2 class="text-lg font-bold text-gray-900">Dynamic Downstream Impact Topology</h2>
+          <p class="text-xs text-gray-500">Multi-hop graph displaying entity names and workflow relationship labels.</p>
+        </div>
+        <span class="px-2.5 py-1 bg-teal-50 text-teal-800 border border-teal-200 rounded-lg text-xs font-semibold">
+          {{ dynamicNodes.length }} Node(s) Across Hop Paths
         </span>
       </div>
 
-      <h1 class="text-3xl sm:text-4xl font-extrabold tracking-tight text-white mb-2">
-        Supply Chain Blast-Radius Analytics
-      </h1>
-      <p class="text-teal-100/80 text-base">
-        Analyze multi-hop component dependencies and downstream product risk in real time.
-      </p>
-    </header>
+      <div class="w-full flex justify-center bg-gray-50 border border-gray-300 rounded-xl p-4 overflow-x-auto">
+        <svg viewBox="0 0 600 280" class="w-full max-w-2xl h-auto">
+          <defs>
+            <marker id="impactArrow" viewBox="0 0 10 10" refX="28" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+              <path d="M 0 0 L 10 5 L 0 10 z" fill="#0d9488" />
+            </marker>
+          </defs>
 
-    <!-- Controls Section: Left Input Card + Right White Action Cards -->
-    <div class="grid grid-cols-1 lg:grid-cols-12 gap-6 mb-6">
-      
-      <!-- Left Input Panel (Teal Glass) -->
-      <div class="lg:col-span-7 bg-teal-800/60 backdrop-blur-md rounded-2xl border border-teal-700/50 shadow-xl p-6 flex flex-col justify-center">
-        <label for="supplierInput" class="text-xs font-bold text-teal-200 uppercase tracking-wider mb-2 block">
-          Supplier Identifier
-        </label>
-        <div class="relative flex items-center">
-          <svg class="absolute left-3.5 w-5 h-5 text-teal-300/70" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <circle cx="11" cy="11" r="8" stroke-width="2"/>
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-4.35-4.35"/>
-          </svg>
-          <input 
-            id="supplierInput"
-            type="text" 
-            placeholder="e.g. SUP-50" 
-            [(ngModel)]="supplierId"
-            [disabled]="isAnalyzing"
-            class="w-full pl-11 pr-4 py-3 bg-teal-950/40 border border-teal-600/50 rounded-xl text-white placeholder-teal-300/40 text-sm focus:outline-none focus:ring-2 focus:ring-teal-400 focus:bg-teal-950/60 transition disabled:opacity-50">
-        </div>
-      </div>
+          <g *ngFor="let link of dynamicLinks">
+            <line 
+              [attr.x1]="link.x1" 
+              [attr.y1]="link.y1" 
+              [attr.x2]="link.x2" 
+              [attr.y2]="link.y2" 
+              stroke="#0d9488" 
+              stroke-width="2" 
+              marker-end="url(#impactArrow)" 
+            />
+            <text 
+              [attr.x]="(link.x1 + link.x2) / 2" 
+              [attr.y]="(link.y1 + link.y2) / 2 - 8" 
+              fill="#0f766e" 
+              font-size="8" 
+              font-weight="bold" 
+              text-anchor="middle"
+            >
+              {{ link.label }}
+            </text>
+          </g>
 
-      <!-- Right Action Column (Top to Bottom White Cards) -->
-      <div class="lg:col-span-5 flex flex-col gap-4">
-        
-        <!-- Primary Action Card (White) -->
-        <button 
-          (click)="onAnalyzeImpact()"
-          [disabled]="isAnalyzing || isSeeding || !supplierId.trim()"
-          class="w-full bg-white hover:bg-teal-50 active:bg-teal-100 text-teal-950 font-semibold p-4 rounded-2xl border border-white shadow-xl transition-all flex items-center justify-between group disabled:opacity-50 disabled:cursor-not-allowed">
-          <div class="flex items-center gap-3">
-            <div class="p-2.5 rounded-xl bg-teal-100 text-teal-800 group-hover:scale-105 transition-transform">
-              <span *ngIf="isAnalyzing" class="w-5 h-5 border-2 border-teal-800/30 border-t-teal-800 rounded-full animate-spin block"></span>
-              <svg *ngIf="!isAnalyzing" class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M22 12h-4l-3 9L9 3l-3 9H2"/>
-              </svg>
-            </div>
-            <div class="text-left">
-              <div class="text-sm font-bold text-teal-950">{{ isAnalyzing ? 'Traversing...' : 'Analyze Impact' }}</div>
-              <div class="text-xs text-teal-700/80">Calculate blast-radius impact</div>
-            </div>
-          </div>
-          <svg class="w-5 h-5 text-teal-600 group-hover:translate-x-1 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/>
-          </svg>
-        </button>
-
-        <!-- Secondary Action Card (White) -->
-        <button 
-          (click)="onSeedData()"
-          [disabled]="isSeeding || isAnalyzing"
-          class="w-full bg-white hover:bg-teal-50 active:bg-teal-100 text-teal-950 font-semibold p-4 rounded-2xl border border-white shadow-xl transition-all flex items-center justify-between group disabled:opacity-50 disabled:cursor-not-allowed">
-          <div class="flex items-center gap-3">
-            <div class="p-2.5 rounded-xl bg-teal-100 text-teal-800 group-hover:scale-105 transition-transform">
-              <span *ngIf="isSeeding" class="w-5 h-5 border-2 border-teal-800/30 border-t-teal-800 rounded-full animate-spin block"></span>
-              <svg *ngIf="!isSeeding" class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/>
-              </svg>
-            </div>
-            <div class="text-left">
-              <div class="text-sm font-bold text-teal-950">{{ isSeeding ? 'Seeding...' : 'Seed Data' }}</div>
-              <div class="text-xs text-teal-700/80">Populate demo graph database</div>
-            </div>
-          </div>
-          <svg class="w-5 h-5 text-teal-600 group-hover:translate-x-1 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/>
-          </svg>
-        </button>
-
-      </div>
-
-    </div>
-
-    <!-- Active Loader Card -->
-    <div *ngIf="isAnalyzing" class="bg-teal-800/60 backdrop-blur-md border border-teal-500/40 rounded-2xl p-6 sm:p-8 mb-6 animate-pulse">
-      <div class="flex items-center gap-4 mb-6">
-        <div class="w-10 h-10 border-4 border-teal-300/20 border-t-teal-300 rounded-full animate-spin shrink-0"></div>
-        <div>
-          <h4 class="font-bold text-white text-base">Traversing Graph Relationships...</h4>
-          <p class="text-xs text-teal-200/80">Executing multi-hop Cypher queries for <code class="bg-teal-950/60 px-1 py-0.5 rounded text-teal-200">{{ supplierId }}</code></p>
-        </div>
-      </div>
-      <div class="space-y-3">
-        <div class="h-8 bg-teal-700/50 rounded-md w-full"></div>
-        <div class="h-12 bg-teal-700/30 rounded-md w-full"></div>
-        <div class="h-12 bg-teal-700/30 rounded-md w-full"></div>
+          <g *ngFor="let node of dynamicNodes" [attr.transform]="'translate(' + node.x + ',' + node.y + ')'">
+            <circle r="26" [attr.fill]="node.color" stroke="#94a3b8" stroke-width="2" />
+            <text text-anchor="middle" dy="-2" fill="#ffffff" font-size="8" font-weight="bold">
+              {{ node.label.length > 11 ? (node.label | slice:0:9) + '...' : node.label }}
+            </text>
+            <text text-anchor="middle" dy="10" fill="#f1f5f9" font-size="7">
+              {{ node.subLabel }}
+            </text>
+          </g>
+        </svg>
       </div>
     </div>
 
-    <!-- Impact Results Table -->
-    <div *ngIf="!isAnalyzing && impactResults.length > 0" class="bg-teal-800/60 backdrop-blur-md border border-teal-700/50 rounded-2xl shadow-xl overflow-hidden mb-6">
-      <div class="p-6 border-b border-teal-700/50 flex items-center justify-between">
-        <div>
-          <h3 class="text-lg font-bold text-white">Impact Analysis Results</h3>
-          <p class="text-xs text-teal-200/80">{{ impactResults.length }} Downstream End-Products Impacted</p>
-        </div>
+    <!-- Impacted Downstream Products Table -->
+    <div *ngIf="hasAnalyzed && !isAnalyzing" class="bg-white rounded-2xl border border-gray-300 shadow-sm overflow-hidden">
+      <div class="p-6 border-b border-gray-200">
+        <h2 class="text-lg font-bold text-gray-900">Impacted Downstream Products</h2>
+        <p class="text-xs text-gray-500">{{ impactedProducts.length }} product(s) impacted downstream from {{ selectedEntity?.name || searchQuery }}</p>
       </div>
 
-      <div class="overflow-x-auto">
-        <table class="w-full text-left border-collapse">
+      <div *ngIf="impactedProducts.length > 0" class="overflow-x-auto">
+        <table class="w-full text-left text-xs text-gray-700 border-collapse">
           <thead>
-            <tr class="bg-teal-950/50 border-b border-teal-700/50 text-xs font-bold text-teal-200 uppercase tracking-wider">
-              <th class="py-3 px-6">Product ID</th>
+            <tr class="bg-gray-100 border-b border-gray-300 text-[10px] font-bold text-gray-600 uppercase tracking-wider">
+              <th *ngIf="hasColumn('SUPPLIER')" class="py-3 px-6">Supplier</th>
+              <th *ngIf="hasColumn('RAW_MATERIAL')" class="py-3 px-6">Raw Material</th>
+              <th *ngIf="hasColumn('COMPONENT')" class="py-3 px-6">Component</th>
+              <th *ngIf="hasColumn('SUB_ASSEMBLY')" class="py-3 px-6">Sub-Assembly</th>
               <th class="py-3 px-6">Product Name</th>
-              <th class="py-3 px-6">Graph Distance</th>
+              <th class="py-3 px-6">Graph Depth (Hops)</th>
             </tr>
           </thead>
-          <tbody class="divide-y divide-teal-700/40 text-sm">
-            <tr *ngFor="let item of impactResults" class="hover:bg-teal-700/30 transition">
-              <td class="py-4 px-6">
-                <span class="font-mono bg-teal-950/60 border border-teal-600/50 text-teal-200 px-2.5 py-1 rounded-md text-xs font-semibold">
-                  {{ item.productId }}
-                </span>
+          <tbody class="divide-y divide-gray-200 text-xs">
+            <tr *ngFor="let item of impactedProducts" class="hover:bg-gray-50 transition">
+              <td *ngIf="hasColumn('SUPPLIER')" class="py-4 px-6 font-medium text-gray-800">
+                {{ item.supplierName || 'N/A' }}
               </td>
-              <td class="py-4 px-6 font-medium text-white">{{ item.productName }}</td>
-              <td class="py-4 px-6">
-                <span [ngClass]="{
-                  'bg-amber-500/20 text-amber-200 border-amber-400/40': item.depth === 2,
-                  'bg-rose-500/20 text-rose-200 border-rose-400/40': item.depth > 2,
-                  'bg-teal-400/20 text-teal-200 border-teal-300/40': item.depth === 1
-                }" class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold border">
-                  <span class="w-1.5 h-1.5 rounded-full fill-current"></span>
-                  {{ item.depth }} Hop{{ item.depth > 1 ? 's' : '' }} Away
-                </span>
+              <td *ngIf="hasColumn('RAW_MATERIAL')" class="py-4 px-6 font-medium text-gray-800">
+                {{ item.rawMaterialName || 'N/A' }}
               </td>
+              <td *ngIf="hasColumn('COMPONENT')" class="py-4 px-6 font-medium text-gray-800">
+                {{ item.componentName || 'N/A' }}
+              </td>
+              <td *ngIf="hasColumn('SUB_ASSEMBLY')" class="py-4 px-6 font-medium text-gray-800">
+                {{ item.subAssemblyName || 'N/A' }}
+              </td>
+             
+              <td class="py-4 px-6 font-medium text-gray-900">{{ item.productName || 'N/A' }}</td>
+              <td class="py-4 px-6 font-bold text-teal-700">{{ item.depth }}</td>
             </tr>
           </tbody>
         </table>
       </div>
+
+      <div *ngIf="impactedProducts.length === 0" class="p-8 text-center text-gray-500 italic text-xs">
+        List empty. No downstream products are impacted by this entity node.
+      </div>
     </div>
 
-    <!-- Empty State -->
-    <div *ngIf="!isAnalyzing && impactResults.length === 0" class="text-center py-12 px-4 bg-teal-800/30 border-2 border-dashed border-teal-700/50 rounded-2xl">
-      <svg class="w-12 h-12 mx-auto text-teal-300/50 mb-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4"/>
-      </svg>
-      <h4 class="text-base font-semibold text-white">No Downstream Impact Visualized</h4>
-      <p class="text-sm text-teal-200/70 mt-1">Enter a Supplier ID (e.g., <code class="font-mono text-teal-200 bg-teal-950/60 px-1 py-0.5 rounded">SUP-50</code>) and click Analyze Impact.</p>
-    </div>
-
-  </div>
-
-  <!-- Bottom-Right Toast Notification System -->
-  <div class="fixed bottom-5 right-5 z-50 flex flex-col gap-3 max-w-sm w-full px-4">
-    <div *ngIf="toastMessage" 
-         [ngClass]="{
-           'bg-emerald-950/90 text-emerald-100 border-emerald-500/50': toastType === 'success',
-           'bg-rose-950/90 text-rose-100 border-rose-500/50': toastType === 'error'
-         }" 
-         class="flex items-center gap-3 p-4 rounded-xl border backdrop-blur-lg shadow-2xl transition-all duration-300 transform translate-y-0 opacity-100">
+    <!-- Static Architecture Diagram -->
+    <div class="bg-white rounded-2xl border border-gray-300 p-6 shadow-sm space-y-3 relative z-10">
+      <div class="flex items-center justify-between border-b border-gray-200 pb-3">
+        <h2 class="text-md font-bold text-gray-900">Static Node Architecture Diagram</h2>
+        <span class="text-xs text-gray-500">Graph Tier Workflow</span>
+      </div>
       
-      <!-- Success Icon -->
-      <svg *ngIf="toastType === 'success'" class="w-6 h-6 text-emerald-400 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/>
-      </svg>
+      <div class="w-full flex justify-center bg-gray-50 border border-gray-300 rounded-xl p-4">
+        <svg viewBox="0 0 600 240" class="w-full max-w-xl h-auto">
+          <defs>
+            <marker id="arrow" viewBox="0 0 10 10" refX="28" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+              <path d="M 0 0 L 10 5 L 0 10 z" fill="#0d9488" />
+            </marker>
+          </defs>
 
-      <!-- Error Icon -->
-      <svg *ngIf="toastType === 'error'" class="w-6 h-6 text-rose-400 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
-      </svg>
+          <line x1="300" y1="40" x2="480" y2="100" stroke="#0d9488" stroke-width="2" marker-end="url(#arrow)" />
+          <text x="390" y="60" fill="#0f766e" font-size="8" font-weight="bold" text-anchor="middle">SUPPLIES</text>
 
-      <span class="text-sm font-medium flex-1">{{ toastMessage }}</span>
+          <line x1="480" y1="100" x2="410" y2="190" stroke="#0d9488" stroke-width="2" marker-end="url(#arrow)" />
+          <text x="460" y="150" fill="#0f766e" font-size="8" font-weight="bold" text-anchor="middle">YIELDS</text>
 
-      <!-- Dismiss Button -->
-      <button (click)="toastMessage = null" class="text-white/60 hover:text-white transition">
-        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
+          <line x1="410" y1="190" x2="190" y2="190" stroke="#0d9488" stroke-width="2" marker-end="url(#arrow)" />
+          <text x="300" y="182" fill="#0f766e" font-size="8" font-weight="bold" text-anchor="middle">ASSEMBLED_INTO</text>
+
+          <line x1="190" y1="190" x2="120" y2="100" stroke="#0d9488" stroke-width="2" marker-end="url(#arrow)" />
+          <text x="140" y="150" fill="#0f766e" font-size="8" font-weight="bold" text-anchor="middle">BUILDS</text>
+
+          <g transform="translate(300, 40)">
+            <circle r="26" fill="#475569" stroke="#64748b" stroke-width="2" />
+            <text text-anchor="middle" dy="4" fill="#ffffff" font-size="10" font-weight="bold">Supplier</text>
+          </g>
+
+          <g transform="translate(480, 100)">
+            <circle r="26" fill="#d97706" stroke="#f59e0b" stroke-width="2" />
+            <text text-anchor="middle" dy="4" fill="#ffffff" font-size="9" font-weight="bold">RawMat</text>
+          </g>
+
+          <g transform="translate(410, 190)">
+            <circle r="26" fill="#0d9488" stroke="#14b8a6" stroke-width="2" />
+            <text text-anchor="middle" dy="4" fill="#ffffff" font-size="9" font-weight="bold">Component</text>
+          </g>
+
+          <g transform="translate(190, 190)">
+            <circle r="26" fill="#0284c7" stroke="#38bdf8" stroke-width="2" />
+            <text text-anchor="middle" dy="4" fill="#ffffff" font-size="9" font-weight="bold">SubAssembly</text>
+          </g>
+
+          <g transform="translate(120, 100)">
+            <circle r="26" fill="#059669" stroke="#10b981" stroke-width="2" />
+            <text text-anchor="middle" dy="4" fill="#ffffff" font-size="10" font-weight="bold">Product</text>
+          </g>
         </svg>
-      </button>
+      </div>
     </div>
+
   </div>
 
+  <!-- Toast Notification -->
+  <div *ngIf="toastMessage" class="fixed bottom-5 right-5 z-50 max-w-sm w-full px-4">
+    <div [ngClass]="toastType === 'success' ? 'bg-green-700 border-green-700 text-white shadow-xl' : 'bg-red-600 border-red-600 text-white shadow-xl'"
+         class="flex items-center justify-between p-4 rounded-2xl border transition">
+      <span class="text-sm font-medium">{{ toastMessage }}</span>
+      <button (click)="toastMessage = null" type="button" aria-label="Dismiss toast notification" class="text-gray-400 hover:text-gray-700 font-bold cursor-pointer">✕</button>
+    </div>
+  </div>
 </div>
