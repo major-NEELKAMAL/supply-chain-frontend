@@ -2,6 +2,7 @@
 
 An interactive Angular application backed by a Spring Boot microservice and CognoDB graph database. This tool enables non-technical domain experts to search entities, analyze multi-tier supply chain dependencies, and quantify downstream blast radius when upstream disruptions occur.
 
+- **Live API Endpoint:** https://supplychain-api-3ntq.onrender.com/api/v1/supply-chain/healthcheck
 - **Live Application:** https://supply-chain-frontend-74mv.onrender.com/
 - **Backend Repository:** https://github.com/major-NEELKAMAL/supplychain-api
 - **Video Walkthrough:** https://www.loom.com/share/591572ae2be3403f8c10cd1720adb4b3

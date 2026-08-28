@@ -123,15 +123,15 @@ export class DataManagementComponent implements OnInit, OnDestroy {
     this.refreshNodesList();
   }
 
-  getParentTypeFor(type?: string): EntityType | string | null {
+  getParentTypeFor(type?: string): EntityType | string | null {    
     if (!type) return null;
-    const normalized = type.replace(/[_/s]/g, '').toUpperCase();
+    const normalized = type.replace(/[_\s]/g, '').toUpperCase();   
     const parentTypeMap: { [key: string]: EntityType | string } = {
       'RAWMATERIAL': EntityType.SUPPLIER,
       'COMPONENT': EntityType.RAW_MATERIAL,
       'SUBASSEMBLY': EntityType.COMPONENT,
       'PRODUCT': EntityType.SUB_ASSEMBLY
-    };
+    };    
     return parentTypeMap[normalized] || null;
   }
 
