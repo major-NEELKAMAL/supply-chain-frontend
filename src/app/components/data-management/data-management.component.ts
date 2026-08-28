@@ -33,6 +33,10 @@ export class DataManagementComponent implements OnInit, OnDestroy {
   isLoadingNodes: boolean = false;
   searchFilter: string = '';
 
+  // Pagination Parameters
+  limit: number = 20;
+  offset: number = 0;
+
   parentOptions: SearchResponse[] = [];
   
   isEditModalOpen: boolean = false;
@@ -90,7 +94,7 @@ export class DataManagementComponent implements OnInit, OnDestroy {
 
   refreshNodesList(): void {
     this.isLoadingNodes = true;
-    this.seedService.getAllSeedNodes().subscribe({
+    this.seedService.getAllSeedNodes(this.limit, this.offset).subscribe({
       next: (res: ApiResponse) => {
         this.nodesList = res.data || [];
         this.isLoadingNodes = false;
@@ -100,6 +104,23 @@ export class DataManagementComponent implements OnInit, OnDestroy {
         this.handleHttpError(err, 'Failed to fetch node entities');
       }
     });
+  }
+
+  nextPage(): void {
+    this.offset += this.limit;
+    this.refreshNodesList();
+  }
+
+  prevPage(): void {
+    if (this.offset >= this.limit) {
+      this.offset -= this.limit;
+      this.refreshNodesList();
+    }
+  }
+
+  onLimitChange(): void {
+    this.offset = 0;
+    this.refreshNodesList();
   }
 
   getParentTypeFor(type?: string): EntityType | string | null {

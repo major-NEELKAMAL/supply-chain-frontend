@@ -1,7 +1,7 @@
 import { Injectable } from '@angular/core';
-import { HttpClient } from '@angular/common/http';
+import { HttpClient, HttpParams } from '@angular/common/http';
 import { Observable } from 'rxjs';
-import { ApiResponse, NodeEntityRequest} from '../models/supply-chain.model';
+import { ApiResponse, NodeEntityRequest } from '../models/supply-chain.model';
 import { environment } from '../../environments/environment';
 
 @Injectable({
@@ -12,8 +12,12 @@ export class SeedService {
 
   constructor(private http: HttpClient) {}
 
-  getAllSeedNodes(): Observable<ApiResponse> {
-    return this.http.get<ApiResponse>(this.baseUrl);
+  getAllSeedNodes(limit: number = 20, offset: number = 0): Observable<ApiResponse> {
+    const params = new HttpParams()
+      .set('limit', limit.toString())
+      .set('offset', offset.toString());
+
+    return this.http.get<ApiResponse>(this.baseUrl, { params });
   }
 
   searchEntities(keyword: string, entityType?: string): Observable<ApiResponse> {
@@ -48,6 +52,6 @@ export class SeedService {
   }
 
   seedDefaultGraph(userId: string): Observable<ApiResponse> {
-  return this.http.post<ApiResponse>(`${this.baseUrl}/default?userId=${userId}`, {});
-}
+    return this.http.post<ApiResponse>(`${this.baseUrl}/default?userId=${userId}`, {});
+  }
 }

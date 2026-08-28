@@ -104,7 +104,7 @@
             <input type="file" (change)="onFileSelected($event)" accept=".csv" [disabled]="isDeleting || isUploading" class="hidden" />
           </label>
 
-          <div *ngIf="selectedFile" class="text-xs text-teal-300 font-bold flex items-center gap-1.5 bg-teal-100 p-2.5 rounded-lg border border-teal-300">
+          <div *ngIf="selectedFile" class="text-xs text-green-600 font-bold flex items-center gap-1.5 bg-white p-2.5 rounded-lg border border-white">
             <span>📄</span> File Selected: {{ selectedFile.name }}
           </div>
 
@@ -152,6 +152,18 @@
       </div>
       
       <div class="flex items-center space-x-2">
+        <!-- Limit Dropdown -->
+        <select
+          [(ngModel)]="limit"
+          (change)="onLimitChange()"
+          class="border border-gray-300 rounded-xl px-2.5 py-1.5 text-xs focus:ring-2 focus:ring-teal-600 focus:border-teal-600 focus:outline-none text-gray-900 bg-gray-50"
+        >
+          <option [ngValue]="5">5 / page</option>
+          <option [ngValue]="10">10 / page</option>
+          <option [ngValue]="15">15 / page</option>
+          <option [ngValue]="20">20 / page</option>
+        </select>
+
         <input
           type="text"
           [(ngModel)]="searchFilter"
@@ -232,6 +244,30 @@
           </tr>
         </tbody>
       </table>
+    </div>
+
+    <!-- Pagination Controls Footer -->
+    <div class="flex items-center justify-between border-t border-gray-200 pt-4 text-xs text-gray-600">
+      <div>
+        Showing offset <span class="font-bold text-gray-900">{{ offset }}</span> to 
+        <span class="font-bold text-gray-900">{{ offset + nodesList.length }}</span>
+      </div>
+      <div class="flex items-center space-x-2">
+        <button
+          (click)="prevPage()"
+          [disabled]="offset === 0 || isLoadingNodes"
+          class="px-3 py-1.5 rounded-xl border border-gray-300 bg-gray-100 hover:bg-gray-200 font-semibold disabled:opacity-50 transition cursor-pointer"
+        >
+          ← Previous
+        </button>
+        <button
+          (click)="nextPage()"
+          [disabled]="nodesList.length < limit || isLoadingNodes"
+          class="px-3 py-1.5 rounded-xl border border-gray-300 bg-gray-100 hover:bg-gray-200 font-semibold disabled:opacity-50 transition cursor-pointer"
+        >
+          Next →
+        </button>
+      </div>
     </div>
   </div>
 
