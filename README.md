@@ -2,8 +2,8 @@
 
 An interactive Angular application backed by a Spring Boot microservice and CognoDB graph database. This tool enables non-technical domain experts to search entities, analyze multi-tier supply chain dependencies, and quantify downstream blast radius when upstream disruptions occur.
 
-- **Live API Endpoint:** https://supplychain-api-3ntq.onrender.com/api/v1/supply-chain/healthcheck
-- **Live Application:** https://supply-chain-frontend-74mv.onrender.com/
+- **Live API Endpoint:** https://api-supply-chain.royawl.com/api/v1/supply-chain/healthcheck
+- **Live Application:** https://ui-supply-chain.royawl.com/
 - **Backend Repository:** https://github.com/major-NEELKAMAL/supplychain-api
 - **Video Walkthrough:** https://www.loom.com/share/d6b0441314d9472c9d703b410b201dae
 
@@ -31,7 +31,7 @@ Evaluating supply chain disruption risk requires recursive multi-tier path trave
 
 ## Key UI & Visual Features
 
-- **Interactive SVG Topology Canvas:** 
+- **Interactive SVG Topology Canvas:**
   - Clear pill-shaped nodes displaying complete entity names with high-contrast text and full hover tooltips.
   - Smooth Bézier curve connections styled on a light gray layout background.
   - Interactive pan, zoom controls, and dynamic path highlighting on node hover.
@@ -80,3 +80,26 @@ Evaluating supply chain disruption risk requires recursive multi-tier path trave
 
 2. Open browser at http://localhost:4200/ or if node start then use http://localhost:4000.
 
+---
+
+## Production Deployment (Docker, ARM64)
+
+The app is deployed as a Docker container (Angular SSR via Node) on an ARM64 (aarch64) host, sitting behind nginx as a reverse proxy with TLS termination.
+
+### Build & Push (multi-arch host required for cross-building)
+
+docker buildx build --platform linux/arm64 \
+  -t <your-dockerhub-username>/supply-chain-frontend:latest \
+  --push .
+
+### Run
+
+docker run -d --name supply-chain-frontend --restart unless-stopped \
+  -p 127.0.0.1:4000:4000 \
+  -e NODE_OPTIONS='--max-old-space-size=150' \
+  --memory=200m \
+  <your-dockerhub-username>/supply-chain-frontend:latest
+
+### nginx Reverse Proxy
+
+The container binds to `127.0.0.1:4000` only (not exposed externally); nginx proxies `https://ui-supply-chain.royawl.com` to it and handles HTTPS via a wildcard certificate for `*.royawl.com`.
